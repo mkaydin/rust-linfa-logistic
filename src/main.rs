@@ -61,7 +61,25 @@ pub fn winequality() -> Dataset<f64, usize, Ix1> {
         .with_feature_names(feature_names)
 }
 
-pub fn preprocess_linear_scaling(){
+pub fn logistic_classification(){
+    let (train, valid) = winequality()
+        .map_targets(|x| if *x > 6 {"good"} else {"bad"})
+        .split_with_ratio(0.9);
+    println!("fit logistic regression with {} training points", train.nsamples());
+
+    let model = LogisticRegression::default()
+        .max_iterations(150)
+        .fit(&train)
+        .unwrap();
+
+    let pred = model.predict(&valid);
+    let cm = pred.confusion_matrix(&valid).unwrap();
+    println!("{:?}", cm);
+
+    println!("accuracy: {}, MCC {}", cm.accuracy(), cm.mcc());
+}
+
+pub fn preprocess_linear_scaling_logistic(){
     let (train, valid) = winequality()
         .map_targets(|x| if *x > 6 {"good"} else {"bad"})
         .split_with_ratio(0.9);
@@ -83,23 +101,9 @@ pub fn preprocess_linear_scaling(){
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let (train, valid) = winequality()
-        .map_targets(|x| if *x > 6 {"good"} else {"bad"})
-        .split_with_ratio(0.9);
-    println!("fit logistic regression with {} training points", train.nsamples());
-
-    let model = LogisticRegression::default()
-        .max_iterations(150)
-        .fit(&train)
-        .unwrap();
-
-    let pred = model.predict(&valid);
-    let cm = pred.confusion_matrix(&valid).unwrap();
-    println!("{:?}", cm);
-
-    println!("accuracy: {}, MCC {}", cm.accuracy(), cm.mcc());
-
-    preprocess_linear_scaling();
+    
+    logistic_classification();
+    preprocess_linear_scaling_logistic();
 
     Ok (())
 }
